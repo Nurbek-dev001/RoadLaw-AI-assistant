@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./vector_db:/app/vector_db
+      - ./data:/app/data
+    command: python backend/main.py
+    restart: unless-stopped
+
+  frontend:
+    image: python:3.11-slim
+    working_dir: /app
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./:/app
+    environment:
+      - BACKEND_URL=http://backend:8000
+    command: bash -c "pip install streamlit requests && streamlit run frontend/app.py --server.port=8501 --server.address=0.0.0.0"
+    depends_on:
+      - backend
+    restart: unless-stopped
